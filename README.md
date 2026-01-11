@@ -1,193 +1,287 @@
-# 📚 SharePoint Access Manager - Académie du Tourisme
+# 🎓 Application de Gestion - Académie du Tourisme
 
-Application web moderne pour gérer les accès SharePoint des formateurs et apprenants de l'Académie du Tourisme.
+Application web moderne pour la gestion des apprenants, formateurs, salles de cours et planning.
 
 ![React](https://img.shields.io/badge/React-18.2-blue)
 ![Vite](https://img.shields.io/badge/Vite-5.0-purple)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.3-cyan)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green)
+![MariaDB](https://img.shields.io/badge/MariaDB-Ready-orange)
 
 ## ✨ Fonctionnalités
 
-- 📊 **Tableau de bord** avec statistiques en temps réel
-- 👥 **Gestion des formateurs** avec leurs multiples accès SharePoint
-- 🎓 **Gestion des apprenants** organisés par groupes (VTF, Héliades, AC, Belambra, ECG)
-- 🌐 **Gestion des sites SharePoint** avec suivi des membres
-- 🔍 **Recherche globale** et filtres avancés
-- 📥 **Import/Export** des données en JSON
-- ⚡ **Interface réactive** et moderne
-- 🎨 **Design professionnel** avec Tailwind CSS
+### 📅 Calendrier
+- Vue calendrier annuel
+- Création d'événements (cours, examens, événements)
+- Association avec salles et formateurs
+- Gestion des horaires
+
+### 🚪 Gestion des salles
+- Liste des salles disponibles
+- Capacité et équipement
+- CRUD complet (Créer, Lire, Modifier, Supprimer)
+
+### 👥 Liste des apprenants et formateurs
+- **Vue Kanban** avec cards
+- **Filtres avancés** : rôle, groupe, TP
+- **Recherche rapide** par nom, prénom, email
+- **CRUD complet** pour les profils utilisateurs
+- Champs profil : nom, prénom, email, rôle, groupe, dates, TP
+
+### 🎨 Design
+- Couleur principale : **#308dc2** (bleu Académie)
+- Design moderne et responsive
+- Zone logo en haut à gauche
 
 ## 🚀 Installation
 
 ### Prérequis
-
 - Node.js 18+ installé
-- npm ou yarn
+- MariaDB installé (optionnel, fonctionne aussi avec localStorage)
 
-### Étapes
+### Option 1 : Mode localStorage (Sans BDD)
 
 ```bash
-# 1. Cloner le repository
-git clone <votre-repo-github>
-cd sharepoint-manager
-
-# 2. Installer les dépendances
+# 1. Installer les dépendances
 npm install
 
-# 3. Lancer en mode développement
+# 2. Lancer l'application
 npm run dev
 
-# 4. Ouvrir dans le navigateur
 # L'application sera accessible sur http://localhost:5173
 ```
 
-## 📦 Build pour production
+✅ Les données sont stockées dans le navigateur (localStorage)
+
+### Option 2 : Mode MariaDB (Production)
 
 ```bash
-npm run build
+# 1. Installer les dépendances
+npm install
+
+# 2. Configurer la base de données
+# Créer une BDD MariaDB :
+mysql -u root -p
+CREATE DATABASE academie_tourisme;
+exit;
+
+# 3. Configurer les variables d'environnement
+cp .env.example .env
+# Éditer .env avec vos paramètres BDD
+
+# 4. Lancer le backend
+npm run server
+# Le serveur API démarre sur http://localhost:3001
+
+# 5. Dans un autre terminal, lancer le frontend
+npm run dev
+# L'application sera accessible sur http://localhost:5173
+
+# OU lancer les deux en même temps :
+npm run dev:full
 ```
 
-Les fichiers optimisés seront générés dans le dossier `dist/`.
+## ⚙️ Configuration BDD
 
-## 🌐 Déploiement sur Netlify
+### Fichier `.env`
 
-### Via l'interface Netlify
-
-1. Créez un compte sur [Netlify](https://netlify.com)
-2. Cliquez sur "Add new site" → "Import an existing project"
-3. Connectez votre repository GitHub
-4. Netlify détectera automatiquement la configuration grâce au fichier `netlify.toml`
-5. Cliquez sur "Deploy"
-
-### Via Netlify CLI
-
-```bash
-# Installer Netlify CLI
-npm install -g netlify-cli
-
-# Se connecter
-netlify login
-
-# Déployer
-netlify deploy --prod
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=votre_mot_de_passe
+DB_NAME=academie_tourisme
+PORT=3001
 ```
 
-## 📂 Structure du projet
+### Structure de la BDD
 
-```
-sharepoint-manager/
-├── src/
-│   ├── components/
-│   │   ├── Dashboard.jsx          # Tableau de bord
-│   │   ├── FormateursView.jsx     # Gestion formateurs
-│   │   ├── ApprenantsView.jsx     # Gestion apprenants
-│   │   └── SitesView.jsx          # Gestion sites SharePoint
-│   ├── data/
-│   │   └── initialData.json       # Données initiales
-│   ├── App.jsx                    # Composant principal
-│   ├── main.jsx                   # Point d'entrée
-│   └── index.css                  # Styles globaux
-├── public/                        # Assets statiques
-├── index.html                     # Template HTML
-├── vite.config.js                 # Configuration Vite
-├── tailwind.config.js             # Configuration Tailwind
-├── netlify.toml                   # Configuration Netlify
-└── package.json                   # Dépendances
-```
+Les tables sont créées automatiquement au démarrage du serveur :
 
-## 🎨 Personnalisation
+- **users** : Apprenants et formateurs
+- **salles** : Salles de cours
+- **events** : Événements du calendrier
 
-### Modifier les couleurs
-
-Éditez `tailwind.config.js` pour personnaliser le thème :
+## 📊 Structure d'un profil utilisateur
 
 ```javascript
-theme: {
-  extend: {
-    colors: {
-      primary: {
-        // Vos couleurs personnalisées
-      }
-    }
-  }
-}
-```
-
-### Ajouter des données
-
-Les données sont stockées dans `src/data/initialData.json`. Vous pouvez :
-
-1. Modifier directement ce fichier
-2. Utiliser la fonction Import dans l'application
-3. Exporter les données modifiées avec le bouton Export
-
-## 🔧 Technologies utilisées
-
-- **React 18** - Framework UI
-- **Vite** - Build tool ultra-rapide
-- **Tailwind CSS** - Framework CSS utility-first
-- **Lucide React** - Icônes modernes
-- **date-fns** - Manipulation des dates
-
-## 📊 Données
-
-### Format des données
-
-Les données sont au format JSON avec trois collections principales :
-
-```json
 {
-  "formateurs": [...],
-  "apprenants": [...],
-  "sites": [...],
-  "metadata": {
-    "derniere_mise_a_jour": "...",
-    "nombre_formateurs": 15,
-    "nombre_apprenants": 78,
-    "nombre_sites": 14
-  }
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean.dupont@email.com",
+  "role": "Apprenant", // ou "Formateur"
+  "groupe": "VTF", // Groupes configurables
+  "dateEntree": "2025-01-01",
+  "dateSortie": "2025-12-31",
+  "tp": "RHH" // RHH, RET, ALT, ou GH
 }
 ```
 
-### Import depuis Excel
+## 🎯 Utilisation
 
-Pour convertir votre fichier Excel existant :
+### Ajouter un utilisateur
+
+1. Cliquer sur "Ajouter un utilisateur"
+2. Remplir le formulaire
+3. Choisir le rôle (Apprenant ou Formateur)
+4. Sélectionner un groupe et un TP
+5. Définir les dates d'entrée et de sortie
+6. Enregistrer
+
+### Filtrer les utilisateurs
+
+- **Recherche** : Tapez un nom, prénom ou email
+- **Filtre par rôle** : Apprenants ou Formateurs
+- **Filtre par groupe** : VTF, Héliades, AC, etc.
+- **Filtre par TP** : RHH, RET, ALT, GH
+
+### Gérer le calendrier
+
+1. Naviguer dans le calendrier
+2. Cliquer sur une date
+3. Créer un événement (cours, examen, événement)
+4. Associer une salle et un formateur
+5. Enregistrer
+
+### Gérer les salles
+
+1. Ajouter une salle avec sa capacité
+2. Définir l'équipement disponible
+3. Modifier ou supprimer selon les besoins
+
+## 📤 Import/Export
+
+### Exporter les données
+
+Cliquez sur "Exporter" dans le header pour télécharger toutes vos données en JSON.
+
+### Importer des données
+
+Cliquez sur "Importer" et sélectionnez un fichier JSON précédemment exporté.
+
+## 🔧 Personnalisation
+
+### Modifier les groupes disponibles
+
+Éditez `src/components/UserModal.jsx` ligne ~35 :
+
+```javascript
+const groupesOptions = [
+  'VOS_GROUPES',
+  'ICI',
+]
+```
+
+### Changer la couleur
+
+La couleur principale (#308dc2) est définie dans `tailwind.config.js`.
+Pour la modifier, changez les valeurs de `primary`.
+
+### Ajouter un logo
+
+Remplacez le texte dans `src/App.jsx` ligne ~61 par votre logo :
+
+```jsx
+<div className="w-48 h-12">
+  <img src="/votre-logo.png" alt="Logo" className="h-full" />
+</div>
+```
+
+## 🌐 Déploiement
+
+### Sur Netlify
 
 ```bash
-# Le script Python fourni permet de convertir l'Excel en JSON
-python convert_excel_to_json.py votre_fichier.xlsx
+# 1. Build
+npm run build
+
+# 2. Déployez le dossier 'dist/' sur Netlify
+# Ou connectez votre repo GitHub à Netlify
 ```
 
-## 🤝 Contribution
+### Sur un serveur avec BDD
 
-Les contributions sont les bienvenues ! Pour contribuer :
+1. Configurez votre serveur MariaDB
+2. Configurez les variables d'environnement
+3. Lancez le backend : `npm run server`
+4. Buildez le frontend : `npm run build`
+5. Servez le dossier `dist/` avec nginx ou Apache
 
-1. Forkez le projet
-2. Créez une branche (`git checkout -b feature/amelioration`)
-3. Committez vos changements (`git commit -m 'Ajout nouvelle fonctionnalité'`)
-4. Poussez vers la branche (`git push origin feature/amelioration`)
-5. Ouvrez une Pull Request
+## 📁 Structure du projet
 
-## 📝 License
+```
+academie-app/
+├── src/
+│   ├── components/         # Composants React
+│   │   ├── UserModal.jsx   # Modal utilisateur
+│   │   ├── SalleModal.jsx  # Modal salle
+│   │   └── EventModal.jsx  # Modal événement
+│   ├── views/              # Vues principales
+│   │   ├── ApprenantsView.jsx  # Vue Kanban
+│   │   ├── CalendrierView.jsx  # Calendrier
+│   │   └── SallesView.jsx      # Gestion salles
+│   ├── services/
+│   │   └── storage.js      # Gestion données
+│   ├── App.jsx             # App principale
+│   └── main.jsx            # Point d'entrée
+├── server/
+│   └── index.js            # API Node.js/MariaDB
+├── package.json            # Dépendances
+└── README.md              # Ce fichier
+```
 
-Ce projet est développé pour l'Académie du Tourisme.
+## 🛠️ Commandes
 
-## 🆘 Support
+```bash
+# Développement (localStorage)
+npm run dev
+
+# Développement (avec BDD)
+npm run server          # Backend seul
+npm run dev:full        # Frontend + Backend
+
+# Production
+npm run build           # Build pour production
+npm run preview         # Prévisualiser le build
+```
+
+## 🔄 Migration de localStorage vers MariaDB
+
+Si vous avez commencé avec localStorage et voulez migrer vers MariaDB :
+
+1. Exportez vos données (bouton "Exporter")
+2. Configurez MariaDB (voir instructions ci-dessus)
+3. Lancez le backend `npm run server`
+4. Importez vos données via l'interface
+
+## 📞 Support
 
 Pour toute question ou problème :
+- Consultez ce README
+- Vérifiez les logs du serveur
+- Testez en mode localStorage d'abord
 
-- Ouvrez une issue sur GitHub
-- Contactez l'équipe IT de l'Académie du Tourisme
+## 🎨 Captures d'écran
 
-## 🎯 Roadmap
+### Vue Kanban
+- Apprenants et formateurs séparés en colonnes
+- Cards avec nom, email, groupe, TP
+- Actions rapides (éditer, supprimer)
 
-- [ ] Authentification utilisateur
-- [ ] Synchronisation avec SharePoint API
-- [ ] Notifications pour les accès expirants
-- [ ] Export Excel
-- [ ] Mode sombre
-- [ ] Application mobile (React Native)
+### Calendrier
+- Vue mensuelle
+- Code couleur par type d'événement
+- Création rapide d'événements
+
+### Gestion des salles
+- Grille de cards
+- Capacité et équipement visibles
+- Modification facile
+
+## 📄 License
+
+Application développée pour l'Académie du Tourisme.
 
 ---
 
 Développé avec ❤️ pour l'Académie du Tourisme
+Technologies : React + Vite + Tailwind CSS + Node.js + MariaDB
