@@ -28,22 +28,25 @@ export default function RightSidebar() {
   })
 
   useEffect(() => {
+    // Charger les stats depuis localStorage (mode local)
     const users = getUsers()
     const salles = getSalles()
     const events = getEvents()
     const sharepoint = getSharePointSites()
 
-    setStats({
+    const localStats = {
       users: users.length,
       apprenants: users.filter(u => u.role === 'Apprenant' && u.etat === 'Actif').length,
       formateurs: users.filter(u => u.role === 'Formateur' && u.etat === 'Actif').length,
       salles: salles.length,
       events: events.length,
       sharepoint: sharepoint.filter(s => s.etat === 'Actif').length,
-    })
+    }
+
+    setStats(localStats)
   }, [])
 
-  // Vérifier le statut de la BDD
+  // Vérifier le statut de la BDD et mettre à jour les stats
   useEffect(() => {
     const checkDatabaseStatus = async () => {
       try {
@@ -54,11 +57,25 @@ export default function RightSidebar() {
         if (response.ok) {
           const data = await response.json()
           setDbStatus(data)
+
+          // Mettre à jour les statistiques avec les données de la BDD
+          if (data.status === 'connected' && data.tables) {
+            // Utiliser les données précises de la BDD
+            setStats({
+              users: data.tables.users || 0,
+              apprenants: data.tables.apprenants || 0,
+              formateurs: data.tables.formateurs || 0,
+              salles: data.tables.salles || 0,
+              events: data.tables.events || 0,
+              sharepoint: data.tables.sharepoint || 0,
+            })
+          }
         } else {
           setDbStatus(prev => ({ ...prev, status: 'error' }))
         }
       } catch (error) {
         setDbStatus(prev => ({ ...prev, status: 'disconnected' }))
+        // Garder les stats localStorage en cas d'erreur
       }
     }
 

@@ -292,13 +292,14 @@ function UserCard({ user, onEdit, onDelete }) {
           {user.tp && (
             <span className="badge badge-info">{user.tp}</span>
           )}
-          {user.etat && user.etat !== 'Actif' && (
-            <span className={`badge ${
-              user.etat === 'Suspendu' ? 'badge-warning' : 'badge-danger'
-            }`}>
-              {user.etat}
-            </span>
-          )}
+          {/* Badge de statut - Toujours affiché */}
+          <span className={`badge ${
+            user.etat === 'Actif' ? 'badge-success' : 
+            user.etat === 'Suspendu' ? 'badge-warning' : 
+            'badge-danger'
+          }`}>
+            {user.etat || 'Actif'}
+          </span>
         </div>
 
         {(user.dateEntree || user.dateSortie) && (

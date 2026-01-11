@@ -421,10 +421,12 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/database/status', async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool.getConnection()
     
     // Récupérer les statistiques
     const [usersCount] = await pool.query('SELECT COUNT(*) as count FROM users');
+    const [apprenantsCount] = await pool.query('SELECT COUNT(*) as count FROM users WHERE role = "Apprenant" AND etat = "Actif"');
+    const [formateursCount] = await pool.query('SELECT COUNT(*) as count FROM users WHERE role = "Formateur" AND etat = "Actif"');
     const [sallesCount] = await pool.query('SELECT COUNT(*) as count FROM salles');
     const [eventsCount] = await pool.query('SELECT COUNT(*) as count FROM events');
     const [sharepointCount] = await pool.query('SELECT COUNT(*) as count FROM sharepoint');
@@ -451,6 +453,8 @@ app.get('/api/database/status', async (req, res) => {
       size_mb: dbSize[0].size_mb || 0,
       tables: {
         users: usersCount[0].count,
+        apprenants: apprenantsCount[0].count,
+        formateurs: formateursCount[0].count,
         salles: sallesCount[0].count,
         events: eventsCount[0].count,
         sharepoint: sharepointCount[0].count,

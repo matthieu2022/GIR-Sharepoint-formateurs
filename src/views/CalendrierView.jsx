@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { getEvents, createEvent, deleteEvent, getUsers, getSalles } from '../services/storage'
+import { getEvents, createEvent, deleteEvent, getUsers, getSalles, getGroupesGIR } from '../services/storage'
 import EventModal from '../components/EventModal'
 
 export default function CalendrierView() {
@@ -12,11 +12,13 @@ export default function CalendrierView() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [users, setUsers] = useState([])
   const [salles, setSalles] = useState([])
+  const [groupesGIR, setGroupesGIR] = useState([])
 
   useEffect(() => {
     loadEvents()
     setUsers(getUsers())
     setSalles(getSalles())
+    setGroupesGIR(getGroupesGIR())
   }, [])
 
   const loadEvents = () => {
@@ -72,6 +74,37 @@ export default function CalendrierView() {
       const eventDate = new Date(event.date)
       return isSameDay(eventDate, date)
     })
+  }
+
+  // Obtenir les groupes GIR actifs pour un jour donné
+  const getActiveGroupesForDay = (date) => {
+    return groupesGIR.filter(groupe => {
+      if (!groupe.dateEntree || groupe.statut !== 'Actif') return false
+      
+      const dateEntree = new Date(groupe.dateEntree)
+      const dateSortie = groupe.dateSortie ? new Date(groupe.dateSortie) : new Date(2099, 11, 31)
+      
+      try {
+        return isWithinInterval(date, { start: dateEntree, end: dateSortie })
+      } catch (e) {
+        return false
+      }
+    })
+  }
+
+  // Couleurs pour les groupes GIR
+  const groupeColors = [
+    { bg: 'bg-blue-50', border: 'border-l-4 border-blue-400', text: 'text-blue-700' },
+    { bg: 'bg-green-50', border: 'border-l-4 border-green-400', text: 'text-green-700' },
+    { bg: 'bg-purple-50', border: 'border-l-4 border-purple-400', text: 'text-purple-700' },
+    { bg: 'bg-orange-50', border: 'border-l-4 border-orange-400', text: 'text-orange-700' },
+    { bg: 'bg-pink-50', border: 'border-l-4 border-pink-400', text: 'text-pink-700' },
+    { bg: 'bg-indigo-50', border: 'border-l-4 border-indigo-400', text: 'text-indigo-700' },
+  }
+
+  const getGroupeColor = (groupeId) => {
+    const index = groupesGIR.findIndex(g => g.id === groupeId)
+    return groupeColors[index % groupeColors.length]
   }
 
   return (
@@ -142,6 +175,7 @@ export default function CalendrierView() {
             <div key={weekIndex} className="grid grid-cols-7 gap-px">
               {week.map(day => {
                 const dayEvents = getEventsForDay(day)
+                const activeGroupes = getActiveGroupesForDay(day)
                 const isCurrentMonth = isSameMonth(day, currentDate)
                 const isToday = isSameDay(day, new Date())
 
@@ -162,6 +196,22 @@ export default function CalendrierView() {
                     </div>
 
                     <div className="space-y-1">
+                      {/* Afficher les groupes GIR actifs */}
+                      {activeGroupes.map(groupe => {
+                        const color = getGroupeColor(groupe.id)
+                        return (
+                          <div
+                            key={`groupe-${groupe.id}`}
+                            className={`text-xs px-2 py-0.5 rounded ${color.bg} ${color.border} ${color.text} truncate`}
+                            title={`${groupe.nom} (${groupe.dateEntree} → ${groupe.dateSortie || '∞'})`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            📚 {groupe.nom}
+                          </div>
+                        )
+                      })}
+
+                      {/* Afficher les événements */}
                       {dayEvents.slice(0, 2).map(event => (
                         <div
                           key={event.id}
