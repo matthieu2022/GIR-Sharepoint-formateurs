@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, Users, DoorOpen, Search, Download, Upload, Server } from 'lucide-react'
 import CalendrierView from './views/CalendrierView'
 import SallesView from './views/SallesView'
@@ -12,6 +12,26 @@ import { exportData, importData, getUsers } from './services/storage'
 
 function App() {
   const [activeView, setActiveView] = useState('apprenants')
+
+  // Listener pour naviguer vers un groupe depuis le calendrier
+  useEffect(() => {
+    const handleNavigateToGroupe = (event) => {
+      setActiveView('groupes-gir')
+      setTimeout(() => {
+        const groupeElement = document.getElementById(`groupe-${event.detail}`)
+        if (groupeElement) {
+          groupeElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          groupeElement.classList.add('ring-2', 'ring-primary-500', 'ring-offset-2')
+          setTimeout(() => {
+            groupeElement.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2')
+          }, 2000)
+        }
+      }, 100)
+    }
+
+    window.addEventListener('navigateToGroupe', handleNavigateToGroupe)
+    return () => window.removeEventListener('navigateToGroupe', handleNavigateToGroupe)
+  }, [])
 
   const handleExport = () => {
     const data = exportData()

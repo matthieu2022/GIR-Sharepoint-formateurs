@@ -1,0 +1,2 @@
+Nom,Prénom,Email,Rôle,Groupe,Date entrée,Date sortie,TP,Licence Global Exam,État,Ordinateur à fournir,Ordi personnel,Adresse O365 à créer,Mot de passe O365,Mot de passe LMS
+"Dupont","Jean","jean.dupont@email.com","Apprenant","VTF","2025-01-01","2025-12-31","RHH","GE123456","Actif","oui","","non","MotDePasse123!","LMS_Pass456!"

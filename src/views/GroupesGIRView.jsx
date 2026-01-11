@@ -95,7 +95,11 @@ export default function GroupesGIRView() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {groupes.map(groupe => (
-                <tr key={groupe.id} className="hover:bg-gray-50 transition-colors">
+                <tr 
+                  key={groupe.id} 
+                  id={`groupe-${groupe.id}`}
+                  className="hover:bg-gray-50 transition-colors scroll-mt-20"
+                >
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{groupe.nom}</div>
                   </td>

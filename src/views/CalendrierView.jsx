@@ -42,6 +42,13 @@ export default function CalendrierView() {
     setShowModal(true)
   }
 
+  const handleGroupeClick = (groupeId, e) => {
+    e.stopPropagation()
+    // Naviguer vers l'onglet Listing groupe GIR et scroller vers le groupe
+    const event = new CustomEvent('navigateToGroupe', { detail: groupeId })
+    window.dispatchEvent(event)
+  }
+
   const handleSaveEvent = (eventData) => {
     createEvent(eventData)
     loadEvents()
@@ -100,7 +107,7 @@ export default function CalendrierView() {
     { bg: 'bg-orange-50', border: 'border-l-4 border-orange-400', text: 'text-orange-700' },
     { bg: 'bg-pink-50', border: 'border-l-4 border-pink-400', text: 'text-pink-700' },
     { bg: 'bg-indigo-50', border: 'border-l-4 border-indigo-400', text: 'text-indigo-700' },
-   ]
+  ]
 
   const getGroupeColor = (groupeId) => {
     const index = groupesGIR.findIndex(g => g.id === groupeId)
@@ -202,9 +209,9 @@ export default function CalendrierView() {
                         return (
                           <div
                             key={`groupe-${groupe.id}`}
-                            className={`text-xs px-2 py-0.5 rounded ${color.bg} ${color.border} ${color.text} truncate`}
-                            title={`${groupe.nom} (${groupe.dateEntree} → ${groupe.dateSortie || '∞'})`}
-                            onClick={(e) => e.stopPropagation()}
+                            className={`text-xs px-2 py-0.5 rounded ${color.bg} ${color.border} ${color.text} truncate cursor-pointer hover:opacity-80 transition-opacity`}
+                            title={`${groupe.nom} (${groupe.dateEntree} → ${groupe.dateSortie || '∞'}) - Cliquez pour voir la fiche`}
+                            onClick={(e) => handleGroupeClick(groupe.id, e)}
                           >
                             📚 {groupe.nom}
                           </div>
@@ -244,23 +251,35 @@ export default function CalendrierView() {
         </div>
       </div>
 
-      {/* Légende */}
+      {/* Légende des groupes GIR */}
       <div className="card">
-        <h3 className="font-semibold text-gray-900 mb-3">Légende</h3>
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-primary-100 rounded"></div>
-            <span className="text-sm text-gray-700">Cours</span>
+        <h3 className="font-semibold text-gray-900 mb-3">Légende des groupes GIR</h3>
+        {groupesGIR.filter(g => g.statut === 'Actif').length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {groupesGIR
+              .filter(g => g.statut === 'Actif')
+              .map((groupe) => {
+                const color = getGroupeColor(groupe.id)
+                return (
+                  <div key={groupe.id} className="flex items-center space-x-2">
+                    <div className={`w-4 h-4 rounded ${color.bg} ${color.border}`}></div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">{groupe.nom}</span>
+                      {(groupe.dateEntree || groupe.dateSortie) && (
+                        <span className="text-xs text-gray-500">
+                          {groupe.dateEntree && format(new Date(groupe.dateEntree), 'dd/MM/yy')}
+                          {groupe.dateEntree && groupe.dateSortie && ' → '}
+                          {groupe.dateSortie && format(new Date(groupe.dateSortie), 'dd/MM/yy')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-red-100 rounded"></div>
-            <span className="text-sm text-gray-700">Examen</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-green-100 rounded"></div>
-            <span className="text-sm text-gray-700">Événement</span>
-          </div>
-        </div>
+        ) : (
+          <p className="text-sm text-gray-500">Aucun groupe GIR actif</p>
+        )}
       </div>
 
       {/* Modal */}

@@ -1,6 +1,7 @@
-import { Users, Calendar, DoorOpen, Server, Database, HardDrive, Activity } from 'lucide-react'
+import { Users, Calendar, DoorOpen, Server, Database, HardDrive, Activity, Bell, AlertTriangle } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getUsers, getSalles, getEvents, getSharePointSites } from '../services/storage'
+import { getUsers, getSalles, getEvents, getSharePointSites, getGroupesGIR } from '../services/storage'
+import { isWithinInterval, differenceInDays, parseISO } from 'date-fns'
 
 export default function RightSidebar() {
   const [stats, setStats] = useState({
@@ -27,6 +28,8 @@ export default function RightSidebar() {
     timestamp: null
   })
 
+  const [notifications, setNotifications] = useState([])
+
   useEffect(() => {
     // Charger les stats depuis localStorage (mode local)
     const users = getUsers()
@@ -44,7 +47,73 @@ export default function RightSidebar() {
     }
 
     setStats(localStats)
+
+    // Charger les notifications pour les groupes GIR
+    loadGroupeNotifications()
   }, [])
+
+  const loadGroupeNotifications = () => {
+    const groupes = getGroupesGIR()
+    const today = new Date()
+    const notifs = []
+
+    groupes.forEach(groupe => {
+      if (groupe.statut !== 'Actif') return
+
+      // Vérifier date d'entrée
+      if (groupe.dateEntree) {
+        try {
+          const dateEntree = parseISO(groupe.dateEntree)
+          const daysUntilEntry = differenceInDays(dateEntree, today)
+
+          // Groupe qui entre dans les 7 prochains jours
+          if (daysUntilEntry > 0 && daysUntilEntry <= 7) {
+            notifs.push({
+              id: `entry-${groupe.id}`,
+              type: 'entry',
+              groupeId: groupe.id,
+              groupeName: groupe.nom,
+              date: groupe.dateEntree,
+              daysLeft: daysUntilEntry,
+              message: `Entre dans ${daysUntilEntry} jour${daysUntilEntry > 1 ? 's' : ''}`
+            })
+          }
+        } catch (e) {
+          // Date invalide, ignorer
+        }
+      }
+
+      // Vérifier date de sortie
+      if (groupe.dateSortie) {
+        try {
+          const dateSortie = parseISO(groupe.dateSortie)
+          const daysUntilExit = differenceInDays(dateSortie, today)
+
+          // Groupe qui sort dans les 14 prochains jours
+          if (daysUntilExit > 0 && daysUntilExit <= 14) {
+            notifs.push({
+              id: `exit-${groupe.id}`,
+              type: 'exit',
+              groupeId: groupe.id,
+              groupeName: groupe.nom,
+              date: groupe.dateSortie,
+              daysLeft: daysUntilExit,
+              message: `Sort dans ${daysUntilExit} jour${daysUntilExit > 1 ? 's' : ''}`
+            })
+          }
+        } catch (e) {
+          // Date invalide, ignorer
+        }
+      }
+    })
+
+    setNotifications(notifs)
+  }
+
+  const handleNotificationClick = (groupeId) => {
+    const event = new CustomEvent('navigateToGroupe', { detail: groupeId })
+    window.dispatchEvent(event)
+  }
 
   // Vérifier le statut de la BDD et mettre à jour les stats
   useEffect(() => {
@@ -216,6 +285,69 @@ export default function RightSidebar() {
           )}
         </div>
       </div>
+
+      {/* Notifications Groupes GIR */}
+      {notifications.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <Bell className="w-4 h-4 text-orange-600" />
+              <h3 className="font-semibold text-gray-900 text-sm">Alertes Groupes GIR</h3>
+            </div>
+            <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
+              {notifications.length}
+            </span>
+          </div>
+          
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {notifications.map(notif => (
+              <div
+                key={notif.id}
+                onClick={() => handleNotificationClick(notif.groupeId)}
+                className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                  notif.type === 'entry'
+                    ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                    : 'bg-orange-50 border-orange-200 hover:bg-orange-100'
+                }`}
+              >
+                <div className="flex items-start space-x-2">
+                  <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                    notif.type === 'entry' ? 'text-blue-600' : 'text-orange-600'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {notif.groupeName}
+                    </p>
+                    <p className={`text-xs font-medium ${
+                      notif.type === 'entry' ? 'text-blue-700' : 'text-orange-700'
+                    }`}>
+                      {notif.message}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {notif.type === 'entry' ? '📅 Entrée' : '🚪 Sortie'} : {new Date(notif.date).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                    notif.daysLeft <= 3
+                      ? 'bg-red-100 text-red-700'
+                      : notif.daysLeft <= 7
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {notif.daysLeft}j
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <p className="text-xs text-gray-500 text-center">
+              Cliquez sur une alerte pour voir le groupe
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Statistiques rapides */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
