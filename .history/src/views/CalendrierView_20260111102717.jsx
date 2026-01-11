@@ -100,7 +100,7 @@ export default function CalendrierView() {
     { bg: 'bg-orange-50', border: 'border-l-4 border-orange-400', text: 'text-orange-700' },
     { bg: 'bg-pink-50', border: 'border-l-4 border-pink-400', text: 'text-pink-700' },
     { bg: 'bg-indigo-50', border: 'border-l-4 border-indigo-400', text: 'text-indigo-700' },
-   ]
+  }
 
   const getGroupeColor = (groupeId) => {
     const index = groupesGIR.findIndex(g => g.id === groupeId)
