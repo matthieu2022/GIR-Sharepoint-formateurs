@@ -15,9 +15,9 @@ app.use(express.json());
 // Configuration BDD MariaDB
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'academie_tourisme',
+  user: process.env.DB_USER || 'admin_gestion_gir',
+  password: process.env.DB_PASSWORD || 'Neosphere2021*',
+  database: process.env.DB_NAME || 'admin_gestion_gir',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -30,74 +30,21 @@ const initDB = async () => {
   try {
     pool = mysql.createPool(dbConfig);
     console.log('✅ Connexion à MariaDB établie');
+    console.log(`📊 Base de données: ${dbConfig.database}`);
     
-    // Créer les tables si elles n'existent pas
-    await createTables();
+    // Tester la connexion
+    const connection = await pool.getConnection();
+    console.log('✅ Test de connexion réussi');
+    connection.release();
   } catch (error) {
     console.error('❌ Erreur connexion BDD:', error);
+    process.exit(1);
   }
 };
 
-// Créer les tables
-const createTables = async () => {
-  const connection = await pool.getConnection();
-  
-  try {
-    // Table users
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(36) PRIMARY KEY,
-        nom VARCHAR(100) NOT NULL,
-        prenom VARCHAR(100) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        role ENUM('Apprenant', 'Formateur') NOT NULL,
-        groupe VARCHAR(100),
-        date_entree DATE,
-        date_sortie DATE,
-        tp ENUM('RHH', 'RET', 'ALT', 'GH'),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Table salles
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS salles (
-        id VARCHAR(36) PRIMARY KEY,
-        nom VARCHAR(100) NOT NULL,
-        capacite INT NOT NULL,
-        equipement TEXT,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Table events
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS events (
-        id VARCHAR(36) PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        date DATE NOT NULL,
-        time_start TIME,
-        time_end TIME,
-        type ENUM('cours', 'examen', 'evenement') NOT NULL,
-        salle VARCHAR(100),
-        formateur VARCHAR(255),
-        groupe VARCHAR(100),
-        description TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    console.log('✅ Tables créées ou déjà existantes');
-  } finally {
-    connection.release();
-  }
-};
-
-// === ROUTES USERS ===
+// =====================================================
+// ROUTES USERS
+// =====================================================
 
 // GET tous les users
 app.get('/api/users', async (req, res) => {
@@ -105,6 +52,7 @@ app.get('/api/users', async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM users ORDER BY nom, prenom');
     res.json(rows);
   } catch (error) {
+    console.error('Erreur GET users:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -118,6 +66,7 @@ app.get('/api/users/:id', async (req, res) => {
     }
     res.json(rows[0]);
   } catch (error) {
+    console.error('Erreur GET user:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -125,17 +74,32 @@ app.get('/api/users/:id', async (req, res) => {
 // POST créer un user
 app.post('/api/users', async (req, res) => {
   try {
-    const { nom, prenom, email, role, groupe, dateEntree, dateSortie, tp } = req.body;
+    const { 
+      nom, prenom, email, role, groupe, dateEntree, dateSortie, tp,
+      licenceGlobalExam, etat, ordinateurFournir, ordiPersonnel, 
+      adresseO365Creer, motDePasseO365, motDePasseLMS
+    } = req.body;
+    
     const id = `user_${Date.now()}`;
     
     await pool.query(
-      'INSERT INTO users (id, nom, prenom, email, role, groupe, date_entree, date_sortie, tp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, nom, prenom, email, role, groupe || null, dateEntree || null, dateSortie || null, tp || null]
+      `INSERT INTO users (
+        id, nom, prenom, email, role, groupe, date_entree, date_sortie, tp,
+        licence_global_exam, etat, ordinateur_fournir, ordi_personnel,
+        adresse_o365_creer, mot_de_passe_o365, mot_de_passe_lms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, nom, prenom, email, role, groupe || null, dateEntree || null, 
+        dateSortie || null, tp || null, licenceGlobalExam || null, 
+        etat || 'Actif', ordinateurFournir || 'oui', ordiPersonnel || null,
+        adresseO365Creer || 'non', motDePasseO365 || null, motDePasseLMS || null
+      ]
     );
     
     const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
     res.status(201).json(rows[0]);
   } catch (error) {
+    console.error('Erreur POST user:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -143,16 +107,33 @@ app.post('/api/users', async (req, res) => {
 // PUT mettre à jour un user
 app.put('/api/users/:id', async (req, res) => {
   try {
-    const { nom, prenom, email, role, groupe, dateEntree, dateSortie, tp } = req.body;
+    const { 
+      nom, prenom, email, role, groupe, dateEntree, dateSortie, tp,
+      licenceGlobalExam, etat, ordinateurFournir, ordiPersonnel, 
+      adresseO365Creer, motDePasseO365, motDePasseLMS
+    } = req.body;
     
     await pool.query(
-      'UPDATE users SET nom = ?, prenom = ?, email = ?, role = ?, groupe = ?, date_entree = ?, date_sortie = ?, tp = ? WHERE id = ?',
-      [nom, prenom, email, role, groupe || null, dateEntree || null, dateSortie || null, tp || null, req.params.id]
+      `UPDATE users SET 
+        nom = ?, prenom = ?, email = ?, role = ?, groupe = ?, 
+        date_entree = ?, date_sortie = ?, tp = ?,
+        licence_global_exam = ?, etat = ?, ordinateur_fournir = ?, 
+        ordi_personnel = ?, adresse_o365_creer = ?,
+        mot_de_passe_o365 = ?, mot_de_passe_lms = ?
+      WHERE id = ?`,
+      [
+        nom, prenom, email, role, groupe || null, dateEntree || null, 
+        dateSortie || null, tp || null, licenceGlobalExam || null,
+        etat || 'Actif', ordinateurFournir || 'oui', ordiPersonnel || null,
+        adresseO365Creer || 'non', motDePasseO365 || null, motDePasseLMS || null,
+        req.params.id
+      ]
     );
     
     const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
+    console.error('Erreur PUT user:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -163,17 +144,21 @@ app.delete('/api/users/:id', async (req, res) => {
     await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erreur DELETE user:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// === ROUTES SALLES ===
+// =====================================================
+// ROUTES SALLES
+// =====================================================
 
 app.get('/api/salles', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM salles ORDER BY nom');
     res.json(rows);
   } catch (error) {
+    console.error('Erreur GET salles:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -191,6 +176,7 @@ app.post('/api/salles', async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM salles WHERE id = ?', [id]);
     res.status(201).json(rows[0]);
   } catch (error) {
+    console.error('Erreur POST salle:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -207,6 +193,7 @@ app.put('/api/salles/:id', async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM salles WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
+    console.error('Erreur PUT salle:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -216,17 +203,21 @@ app.delete('/api/salles/:id', async (req, res) => {
     await pool.query('DELETE FROM salles WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erreur DELETE salle:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// === ROUTES EVENTS ===
+// =====================================================
+// ROUTES EVENTS
+// =====================================================
 
 app.get('/api/events', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM events ORDER BY date');
     res.json(rows);
   } catch (error) {
+    console.error('Erreur GET events:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -237,13 +228,15 @@ app.post('/api/events', async (req, res) => {
     const id = `event_${Date.now()}`;
     
     await pool.query(
-      'INSERT INTO events (id, title, date, time_start, time_end, type, salle, formateur, groupe, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO events (id, title, date, time_start, time_end, type, salle, formateur, groupe, description) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, title, date, timeStart || null, timeEnd || null, type, salle || null, formateur || null, groupe || null, description || null]
     );
     
     const [rows] = await pool.query('SELECT * FROM events WHERE id = ?', [id]);
     res.status(201).json(rows[0]);
   } catch (error) {
+    console.error('Erreur POST event:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -253,13 +246,181 @@ app.delete('/api/events/:id', async (req, res) => {
     await pool.query('DELETE FROM events WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erreur DELETE event:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// =====================================================
+// ROUTES SHAREPOINT
+// =====================================================
+
+app.get('/api/sharepoint', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM sharepoint ORDER BY nom');
+    res.json(rows);
+  } catch (error) {
+    console.error('Erreur GET sharepoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/sharepoint', async (req, res) => {
+  try {
+    const { etat, nom, url, description } = req.body;
+    const id = `sp_${Date.now()}`;
+    
+    await pool.query(
+      'INSERT INTO sharepoint (id, etat, nom, url, description) VALUES (?, ?, ?, ?, ?)',
+      [id, etat || 'Actif', nom, url || null, description || null]
+    );
+    
+    const [rows] = await pool.query('SELECT * FROM sharepoint WHERE id = ?', [id]);
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error('Erreur POST sharepoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/sharepoint/:id', async (req, res) => {
+  try {
+    const { etat, nom, url, description } = req.body;
+    
+    await pool.query(
+      'UPDATE sharepoint SET etat = ?, nom = ?, url = ?, description = ? WHERE id = ?',
+      [etat || 'Actif', nom, url || null, description || null, req.params.id]
+    );
+    
+    const [rows] = await pool.query('SELECT * FROM sharepoint WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Erreur PUT sharepoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/sharepoint/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM sharepoint WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur DELETE sharepoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// ROUTES GROUPES GIR
+// =====================================================
+
+app.get('/api/groupes-gir', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM groupes_gir ORDER BY nom');
+    res.json(rows);
+  } catch (error) {
+    console.error('Erreur GET groupes-gir:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/groupes-gir', async (req, res) => {
+  try {
+    const { nom, dateEntree, dateSortie, statut } = req.body;
+    const id = `gir_${Date.now()}`;
+    
+    await pool.query(
+      'INSERT INTO groupes_gir (id, nom, date_entree, date_sortie, statut) VALUES (?, ?, ?, ?, ?)',
+      [id, nom, dateEntree || null, dateSortie || null, statut || 'Actif']
+    );
+    
+    const [rows] = await pool.query('SELECT * FROM groupes_gir WHERE id = ?', [id]);
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error('Erreur POST groupe-gir:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/groupes-gir/:id', async (req, res) => {
+  try {
+    const { nom, dateEntree, dateSortie, statut } = req.body;
+    
+    await pool.query(
+      'UPDATE groupes_gir SET nom = ?, date_entree = ?, date_sortie = ?, statut = ? WHERE id = ?',
+      [nom, dateEntree || null, dateSortie || null, statut || 'Actif', req.params.id]
+    );
+    
+    const [rows] = await pool.query('SELECT * FROM groupes_gir WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Erreur PUT groupe-gir:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/groupes-gir/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM groupes_gir WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur DELETE groupe-gir:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// ROUTES NOTES
+// =====================================================
+
+app.get('/api/notes', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM notes WHERE id = 1');
+    if (rows.length === 0) {
+      res.json({ content: '' });
+    } else {
+      res.json({ content: rows[0].content });
+    }
+  } catch (error) {
+    console.error('Erreur GET notes:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/notes', async (req, res) => {
+  try {
+    const { content } = req.body;
+    
+    await pool.query(
+      'INSERT INTO notes (id, content) VALUES (1, ?) ON DUPLICATE KEY UPDATE content = ?',
+      [content, content]
+    );
+    
+    res.json({ content, success: true });
+  } catch (error) {
+    console.error('Erreur POST notes:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// Route de test
+// =====================================================
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    database: dbConfig.database,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Démarrer le serveur
 initDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+    console.log(`🚀 Serveur API démarré sur http://localhost:${PORT}`);
+    console.log(`📊 Base de données: ${dbConfig.database}`);
+    console.log(`🔐 Utilisateur: ${dbConfig.user}`);
+    console.log(`✅ Prêt à recevoir des requêtes`);
   });
 });
