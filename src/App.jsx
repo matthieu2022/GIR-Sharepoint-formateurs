@@ -4,6 +4,7 @@ import CalendrierView from './views/CalendrierView'
 import SallesView from './views/SallesView'
 import ApprenantsView from './views/ApprenantsView'
 import SharePointView from './views/SharePointView'
+import GroupesGIRView from './views/GroupesGIRView'
 import SideCalendar from './components/SideCalendar'
 import NotesWidget from './components/NotesWidget'
 import RightSidebar from './components/RightSidebar'
@@ -33,7 +34,7 @@ function App() {
     const headers = [
       'Nom', 'Prénom', 'Email', 'Rôle', 'Groupe', 'Date entrée', 'Date sortie', 
       'TP', 'Licence Global Exam', 'État', 'Ordinateur à fournir', 
-      'Ordi personnel', 'Adresse O365 à créer'
+      'Ordi personnel', 'Adresse O365 à créer', 'Mot de passe O365', 'Mot de passe LMS'
     ]
     
     // Convertir les données en lignes CSV
@@ -50,7 +51,9 @@ function App() {
       user.etat || '',
       user.ordinateurFournir || '',
       user.ordiPersonnel || '',
-      user.adresseO365Creer || ''
+      user.adresseO365Creer || '',
+      user.motDePasseO365 || '',
+      user.motDePasseLMS || ''
     ])
     
     // Créer le contenu CSV
@@ -69,18 +72,21 @@ function App() {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
+    
+    alert('⚠️ ATTENTION : Ce fichier contient des mots de passe. À manipuler avec précaution !')
   }
 
   const handleDownloadTemplate = () => {
     const headers = [
       'Nom', 'Prénom', 'Email', 'Rôle', 'Groupe', 'Date entrée', 'Date sortie', 
       'TP', 'Licence Global Exam', 'État', 'Ordinateur à fournir', 
-      'Ordi personnel', 'Adresse O365 à créer'
+      'Ordi personnel', 'Adresse O365 à créer', 'Mot de passe O365', 'Mot de passe LMS'
     ]
     
     const exampleRow = [
       'Dupont', 'Jean', 'jean.dupont@email.com', 'Apprenant', 'VTF', 
-      '2025-01-01', '2025-12-31', 'RHH', 'GE123456', 'Actif', 'oui', '', 'non'
+      '2025-01-01', '2025-12-31', 'RHH', 'GE123456', 'Actif', 'oui', '', 'non',
+      'MotDePasse123!', 'LMS_Pass456!'
     ]
     
     const csvContent = [
@@ -129,6 +135,8 @@ function App() {
                 ordinateurFournir: values[10] || 'oui',
                 ordiPersonnel: values[11] || '',
                 adresseO365Creer: values[12] || 'non',
+                motDePasseO365: values[13] || '',
+                motDePasseLMS: values[14] || '',
                 createdAt: new Date().toISOString()
               }
               users.push(user)
@@ -136,7 +144,7 @@ function App() {
           }
           
           importData({ users })
-          alert(`${users.length} utilisateur(s) importé(s) avec succès !`)
+          alert(`✅ ${users.length} utilisateur(s) importé(s) avec succès !\n⚠️ Les mots de passe ont été importés de manière sécurisée.`)
           window.location.reload()
         } catch (error) {
           alert('Erreur lors de l\'import du CSV. Vérifiez le format du fichier.')
@@ -167,9 +175,10 @@ function App() {
 
   const navItems = [
     { id: 'calendrier', label: 'Calendrier', icon: CalendarIcon },
-    { id: 'salles', label: 'Gestion des salles', icon: DoorOpen },
+    { id: 'salles', label: 'Gestion des salles du site du Rayolet', icon: DoorOpen },
     { id: 'apprenants', label: 'Liste des apprenants', icon: Users },
     { id: 'sharepoint', label: 'Listing SharePoint', icon: Server },
+    { id: 'groupes-gir', label: 'Listing groupe GIR', icon: Users },
   ]
 
   return (
@@ -204,15 +213,6 @@ function App() {
                   <span className="hidden sm:inline">Template CSV</span>
                 </button>
 
-                <button
-                  onClick={handleExportCSV}
-                  className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors text-sm font-medium"
-                  title="Exporter en CSV"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Export CSV</span>
-                </button>
-
                 <label className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer text-sm font-medium">
                   <Upload className="w-4 h-4" />
                   <span className="hidden sm:inline">Import CSV</span>
@@ -220,25 +220,6 @@ function App() {
                     type="file"
                     accept=".csv"
                     onChange={handleImportCSV}
-                    className="hidden"
-                  />
-                </label>
-
-                <button
-                  onClick={handleExport}
-                  className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors text-sm font-medium"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Export JSON</span>
-                </button>
-
-                <label className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer text-sm font-medium">
-                  <Upload className="w-4 h-4" />
-                  <span className="hidden sm:inline">Import JSON</span>
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleImport}
                     className="hidden"
                   />
                 </label>
@@ -274,6 +255,7 @@ function App() {
           {activeView === 'salles' && <SallesView />}
           {activeView === 'apprenants' && <ApprenantsView />}
           {activeView === 'sharepoint' && <SharePointView />}
+          {activeView === 'groupes-gir' && <GroupesGIRView />}
         </main>
       </div>
 

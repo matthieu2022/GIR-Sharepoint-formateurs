@@ -91,18 +91,6 @@ export default function RightSidebar() {
             href="#"
             className="block px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-lg transition-colors"
           >
-            📧 Messagerie
-          </a>
-          <a
-            href="#"
-            className="block px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-lg transition-colors"
-          >
-            📁 Documents
-          </a>
-          <a
-            href="#"
-            className="block px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-lg transition-colors"
-          >
             ⚙️ Paramètres
           </a>
         </div>

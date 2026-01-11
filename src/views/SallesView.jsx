@@ -50,7 +50,7 @@ export default function SallesView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestion des salles de cours</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Gestion des salles du site du Rayolet</h2>
           <p className="text-gray-600 mt-1">
             {salles.length} salle{salles.length > 1 ? 's' : ''} disponible{salles.length > 1 ? 's' : ''}
           </p>

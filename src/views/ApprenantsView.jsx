@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Filter, Edit2, Trash2, Mail, Calendar } from 'lucide-react'
+import { Plus, Search, Filter, Edit2, Trash2, Mail, Calendar, Eye, EyeOff } from 'lucide-react'
 import { getUsers, createUser, updateUser, deleteUser } from '../services/storage'
 import UserModal from '../components/UserModal'
 
@@ -253,6 +253,9 @@ export default function ApprenantsView() {
 
 // Composant Card pour affichage Kanban
 function UserCard({ user, onEdit, onDelete }) {
+  const [showO365Password, setShowO365Password] = useState(false)
+  const [showLMSPassword, setShowLMSPassword] = useState(false)
+
   return (
     <div className="kanban-card group">
       <div className="flex items-start justify-between mb-3">
@@ -289,6 +292,13 @@ function UserCard({ user, onEdit, onDelete }) {
           {user.tp && (
             <span className="badge badge-info">{user.tp}</span>
           )}
+          {user.etat && user.etat !== 'Actif' && (
+            <span className={`badge ${
+              user.etat === 'Suspendu' ? 'badge-warning' : 'badge-danger'
+            }`}>
+              {user.etat}
+            </span>
+          )}
         </div>
 
         {(user.dateEntree || user.dateSortie) && (
@@ -298,6 +308,44 @@ function UserCard({ user, onEdit, onDelete }) {
               {user.dateEntree && `Du ${user.dateEntree}`}
               {user.dateSortie && ` au ${user.dateSortie}`}
             </span>
+          </div>
+        )}
+
+        {/* Mots de passe - Informations sensibles */}
+        {(user.motDePasseO365 || user.motDePasseLMS) && (
+          <div className="border-t border-gray-200 pt-2 mt-2 space-y-1">
+            {user.motDePasseO365 && (
+              <div className="flex items-center justify-between text-xs bg-yellow-50 px-2 py-1 rounded">
+                <span className="text-gray-700">MdP O365:</span>
+                <div className="flex items-center space-x-2">
+                  <span className="font-mono text-gray-900">
+                    {showO365Password ? user.motDePasseO365 : '••••••••'}
+                  </span>
+                  <button
+                    onClick={() => setShowO365Password(!showO365Password)}
+                    className="text-gray-600 hover:text-primary-600"
+                  >
+                    {showO365Password ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+            )}
+            {user.motDePasseLMS && (
+              <div className="flex items-center justify-between text-xs bg-yellow-50 px-2 py-1 rounded">
+                <span className="text-gray-700">MdP LMS:</span>
+                <div className="flex items-center space-x-2">
+                  <span className="font-mono text-gray-900">
+                    {showLMSPassword ? user.motDePasseLMS : '••••••••'}
+                  </span>
+                  <button
+                    onClick={() => setShowLMSPassword(!showLMSPassword)}
+                    className="text-gray-600 hover:text-primary-600"
+                  >
+                    {showLMSPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

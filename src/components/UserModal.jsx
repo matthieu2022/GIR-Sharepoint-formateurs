@@ -16,6 +16,8 @@ export default function UserModal({ user, onClose, onSave }) {
     ordinateurFournir: 'oui',
     ordiPersonnel: '',
     adresseO365Creer: 'non',
+    motDePasseO365: '',
+    motDePasseLMS: '',
   })
 
   useEffect(() => {
@@ -278,6 +280,44 @@ export default function UserModal({ user, onClose, onSave }) {
                 <option value="oui">Oui</option>
                 <option value="non">Non</option>
               </select>
+            </div>
+
+            {/* Mot de passe Office 365 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mot de passe Office 365
+              </label>
+              <input
+                type="password"
+                name="motDePasseO365"
+                value={formData.motDePasseO365}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Mot de passe O365"
+                autoComplete="new-password"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                ⚠️ Information sensible - Accès limité aux administrateurs
+              </p>
+            </div>
+
+            {/* Mot de passe LMS ADT */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mot de passe LMS ADT
+              </label>
+              <input
+                type="password"
+                name="motDePasseLMS"
+                value={formData.motDePasseLMS}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Mot de passe LMS"
+                autoComplete="new-password"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                ⚠️ Information sensible - Accès limité aux administrateurs
+              </p>
             </div>
           </div>
 

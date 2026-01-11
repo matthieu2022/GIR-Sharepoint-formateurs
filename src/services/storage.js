@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   EVENTS: 'academie_events',
   SHAREPOINT: 'academie_sharepoint',
   NOTES: 'academie_notes',
+  GROUPES_GIR: 'academie_groupes_gir',
 };
 
 // Initialiser les données par défaut
@@ -29,6 +30,9 @@ const initializeStorage = () => {
   }
   if (!localStorage.getItem(STORAGE_KEYS.NOTES)) {
     localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify({ content: '' }));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.GROUPES_GIR)) {
+    localStorage.setItem(STORAGE_KEYS.GROUPES_GIR, JSON.stringify([]));
   }
 };
 
@@ -224,4 +228,41 @@ export const saveNotes = (content) => {
   const notes = { content, updatedAt: new Date().toISOString() };
   localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
   return notes;
+};
+
+// === GROUPES GIR ===
+export const getGroupesGIR = () => {
+  initializeStorage();
+  const data = localStorage.getItem(STORAGE_KEYS.GROUPES_GIR);
+  return JSON.parse(data || '[]');
+};
+
+export const createGroupeGIR = (groupeData) => {
+  const groupes = getGroupesGIR();
+  const newGroupe = {
+    id: Date.now().toString(),
+    ...groupeData,
+    createdAt: new Date().toISOString(),
+  };
+  groupes.push(newGroupe);
+  localStorage.setItem(STORAGE_KEYS.GROUPES_GIR, JSON.stringify(groupes));
+  return newGroupe;
+};
+
+export const updateGroupeGIR = (id, groupeData) => {
+  const groupes = getGroupesGIR();
+  const index = groupes.findIndex(g => g.id === id);
+  if (index !== -1) {
+    groupes[index] = { ...groupes[index], ...groupeData, updatedAt: new Date().toISOString() };
+    localStorage.setItem(STORAGE_KEYS.GROUPES_GIR, JSON.stringify(groupes));
+    return groupes[index];
+  }
+  return null;
+};
+
+export const deleteGroupeGIR = (id) => {
+  const groupes = getGroupesGIR();
+  const filtered = groupes.filter(g => g.id !== id);
+  localStorage.setItem(STORAGE_KEYS.GROUPES_GIR, JSON.stringify(filtered));
+  return true;
 };

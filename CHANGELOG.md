@@ -1,5 +1,36 @@
 # 📝 Changelog - Modifications
 
+## Version 2.1 - Mots de passe (Janvier 2025)
+
+### 🔐 Nouveaux champs de sécurité
+
+#### Profil utilisateur
+Ajout de deux champs sensibles :
+- **Mot de passe Office 365** : Stockage du mot de passe O365
+- **Mot de passe LMS ADT** : Stockage du mot de passe LMS
+
+#### Fonctionnalités de sécurité
+- Champs de type password (masqués lors de la saisie)
+- Affichage masqué dans les cards Kanban (••••••••)
+- Boutons œil 👁️ pour révéler/masquer les mots de passe
+- Fond jaune pour signaler l'information sensible
+- Avertissement de sécurité dans le formulaire
+
+#### Import/Export
+- Inclus dans l'export CSV (colonnes 14 et 15)
+- Alerte de sécurité lors de l'export
+- Inclus dans le template CSV
+- Import sécurisé avec confirmation
+
+#### Accès
+- Réservé aux 4 administrateurs :
+  - Virginie Clément
+  - Muriel Ambrosino
+  - Orlane Laurent
+  - Cyber-technique
+
+---
+
 ## Version 2.0 - Nouvelles fonctionnalités
 
 ### ✨ Ajouts principaux
