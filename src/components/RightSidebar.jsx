@@ -1,4 +1,4 @@
-import { Users, Calendar, DoorOpen, Server } from 'lucide-react'
+import { Users, Calendar, DoorOpen, Server, Database, HardDrive, Activity } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { getUsers, getSalles, getEvents, getSharePointSites } from '../services/storage'
 
@@ -10,6 +10,21 @@ export default function RightSidebar() {
     salles: 0,
     events: 0,
     sharepoint: 0,
+  })
+
+  const [dbStatus, setDbStatus] = useState({
+    status: 'checking',
+    database: '-',
+    version: '-',
+    size_mb: 0,
+    tables: {
+      users: 0,
+      salles: 0,
+      events: 0,
+      sharepoint: 0,
+      groupes_gir: 0
+    },
+    timestamp: null
   })
 
   useEffect(() => {
@@ -28,8 +43,163 @@ export default function RightSidebar() {
     })
   }, [])
 
+  // Vérifier le statut de la BDD
+  useEffect(() => {
+    const checkDatabaseStatus = async () => {
+      try {
+        // Remplacer par votre URL API en production
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+        const response = await fetch(`${API_URL}/api/database/status`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          setDbStatus(data)
+        } else {
+          setDbStatus(prev => ({ ...prev, status: 'error' }))
+        }
+      } catch (error) {
+        setDbStatus(prev => ({ ...prev, status: 'disconnected' }))
+      }
+    }
+
+    // Vérifier au chargement
+    checkDatabaseStatus()
+
+    // Vérifier toutes les 30 secondes
+    const interval = setInterval(checkDatabaseStatus, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const getStatusColor = () => {
+    switch (dbStatus.status) {
+      case 'connected':
+        return 'bg-green-100 text-green-800 border-green-300'
+      case 'error':
+      case 'disconnected':
+        return 'bg-red-100 text-red-800 border-red-300'
+      default:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+    }
+  }
+
+  const getStatusText = () => {
+    switch (dbStatus.status) {
+      case 'connected':
+        return '✓ Connectée'
+      case 'error':
+        return '✗ Erreur'
+      case 'disconnected':
+        return '✗ Déconnectée'
+      default:
+        return '⟳ Vérification...'
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* Statut Base de données */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex items-center space-x-2 mb-4">
+          <Database className="w-4 h-4 text-primary-600" />
+          <h3 className="font-semibold text-gray-900 text-sm">Base de données</h3>
+        </div>
+        
+        <div className="space-y-3">
+          {/* Badge de statut */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600">Statut</span>
+            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor()}`}>
+              {getStatusText()}
+            </span>
+          </div>
+
+          {dbStatus.status === 'connected' && (
+            <>
+              {/* Nom de la BDD */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Nom</span>
+                <span className="text-xs font-mono font-medium text-gray-900">
+                  {dbStatus.database}
+                </span>
+              </div>
+
+              {/* Version */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Version</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {dbStatus.version?.split('-')[0] || '-'}
+                </span>
+              </div>
+
+              {/* Taille */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600 flex items-center space-x-1">
+                  <HardDrive className="w-3 h-3" />
+                  <span>Taille</span>
+                </span>
+                <span className="text-xs font-medium text-gray-700">
+                  {dbStatus.size_mb} Mo
+                </span>
+              </div>
+
+              {/* Séparateur */}
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Enregistrements par table */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-gray-700 mb-2">Enregistrements</p>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Users</span>
+                  <span className="text-xs font-medium text-primary-700">
+                    {dbStatus.tables.users}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Salles</span>
+                  <span className="text-xs font-medium text-primary-700">
+                    {dbStatus.tables.salles}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Événements</span>
+                  <span className="text-xs font-medium text-primary-700">
+                    {dbStatus.tables.events}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">SharePoint</span>
+                  <span className="text-xs font-medium text-primary-700">
+                    {dbStatus.tables.sharepoint}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Groupes GIR</span>
+                  <span className="text-xs font-medium text-primary-700">
+                    {dbStatus.tables.groupes_gir}
+                  </span>
+                </div>
+              </div>
+
+              {/* Dernière vérification */}
+              {dbStatus.timestamp && (
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                    <Activity className="w-3 h-3" />
+                    <span>Actualisé: {new Date(dbStatus.timestamp).toLocaleTimeString('fr-FR')}</span>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Statistiques rapides */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <h3 className="font-semibold text-gray-900 text-sm mb-4">Statistiques</h3>

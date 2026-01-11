@@ -415,6 +415,59 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// =====================================================
+// Route pour le statut de la BDD (pour la sidebar)
+// =====================================================
+
+app.get('/api/database/status', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    
+    // Récupérer les statistiques
+    const [usersCount] = await pool.query('SELECT COUNT(*) as count FROM users');
+    const [sallesCount] = await pool.query('SELECT COUNT(*) as count FROM salles');
+    const [eventsCount] = await pool.query('SELECT COUNT(*) as count FROM events');
+    const [sharepointCount] = await pool.query('SELECT COUNT(*) as count FROM sharepoint');
+    const [groupesGIRCount] = await pool.query('SELECT COUNT(*) as count FROM groupes_gir');
+    
+    // Récupérer la taille de la BDD
+    const [dbSize] = await pool.query(`
+      SELECT 
+        ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
+      FROM information_schema.TABLES
+      WHERE table_schema = ?
+    `, [dbConfig.database]);
+    
+    // Récupérer la version MySQL/MariaDB
+    const [version] = await pool.query('SELECT VERSION() as version');
+    
+    connection.release();
+    
+    res.json({
+      status: 'connected',
+      database: dbConfig.database,
+      host: dbConfig.host,
+      version: version[0].version,
+      size_mb: dbSize[0].size_mb || 0,
+      tables: {
+        users: usersCount[0].count,
+        salles: sallesCount[0].count,
+        events: eventsCount[0].count,
+        sharepoint: sharepointCount[0].count,
+        groupes_gir: groupesGIRCount[0].count
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Erreur statut BDD:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Démarrer le serveur
 initDB().then(() => {
   app.listen(PORT, () => {
