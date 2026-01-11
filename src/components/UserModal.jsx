@@ -11,6 +11,11 @@ export default function UserModal({ user, onClose, onSave }) {
     dateEntree: '',
     dateSortie: '',
     tp: '',
+    licenceGlobalExam: '',
+    etat: 'Actif',
+    ordinateurFournir: 'oui',
+    ordiPersonnel: '',
+    adresseO365Creer: 'non',
   })
 
   useEffect(() => {
@@ -187,6 +192,92 @@ export default function UserModal({ user, onClose, onSave }) {
                 onChange={handleChange}
                 className="input-field"
               />
+            </div>
+
+            {/* Licence Global Exam */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Licence Global Exam
+              </label>
+              <input
+                type="text"
+                name="licenceGlobalExam"
+                value={formData.licenceGlobalExam}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Numéro de licence"
+              />
+            </div>
+
+            {/* État */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                État <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="etat"
+                value={formData.etat}
+                onChange={handleChange}
+                required
+                className="select-field"
+              >
+                <option value="Actif">Actif</option>
+                <option value="Suspendu">Suspendu</option>
+                <option value="Supprimé">Supprimé</option>
+              </select>
+            </div>
+
+            {/* Ordinateur à fournir */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ordinateur à fournir
+              </label>
+              <select
+                name="ordinateurFournir"
+                value={formData.ordinateurFournir}
+                onChange={handleChange}
+                className="select-field"
+              >
+                <option value="oui">Oui</option>
+                <option value="non">Non</option>
+              </select>
+            </div>
+
+            {/* Ordinateur personnel (si non) */}
+            {formData.ordinateurFournir === 'non' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ordinateur personnel
+                </label>
+                <select
+                  name="ordiPersonnel"
+                  value={formData.ordiPersonnel}
+                  onChange={handleChange}
+                  className="select-field"
+                >
+                  <option value="">Sélectionner un type</option>
+                  <option value="MAC">MAC</option>
+                  <option value="PC">PC</option>
+                  <option value="Chromebook">Chromebook</option>
+                  <option value="Autres">Autres</option>
+                </select>
+              </div>
+            )}
+
+            {/* Adresse Office 365 à créer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Adresse Office 365 à créer
+              </label>
+              <select
+                name="adresseO365Creer"
+                value={formData.adresseO365Creer}
+                onChange={handleChange}
+                className="select-field"
+              >
+                <option value="oui">Oui</option>
+                <option value="non">Non</option>
+              </select>
             </div>
           </div>
 

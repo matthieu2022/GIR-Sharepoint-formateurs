@@ -5,6 +5,8 @@ const STORAGE_KEYS = {
   USERS: 'academie_users',
   SALLES: 'academie_salles',
   EVENTS: 'academie_events',
+  SHAREPOINT: 'academie_sharepoint',
+  NOTES: 'academie_notes',
 };
 
 // Initialiser les données par défaut
@@ -21,6 +23,12 @@ const initializeStorage = () => {
   }
   if (!localStorage.getItem(STORAGE_KEYS.EVENTS)) {
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.SHAREPOINT)) {
+    localStorage.setItem(STORAGE_KEYS.SHAREPOINT, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.NOTES)) {
+    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify({ content: '' }));
   }
 };
 
@@ -166,4 +174,54 @@ export const importData = (data) => {
   if (data.events) {
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(data.events));
   }
+};
+
+// === SHAREPOINT ===
+export const getSharePointSites = () => {
+  initializeStorage();
+  const data = localStorage.getItem(STORAGE_KEYS.SHAREPOINT);
+  return JSON.parse(data || '[]');
+};
+
+export const createSharePointSite = (siteData) => {
+  const sites = getSharePointSites();
+  const newSite = {
+    id: Date.now().toString(),
+    ...siteData,
+    createdAt: new Date().toISOString(),
+  };
+  sites.push(newSite);
+  localStorage.setItem(STORAGE_KEYS.SHAREPOINT, JSON.stringify(sites));
+  return newSite;
+};
+
+export const updateSharePointSite = (id, siteData) => {
+  const sites = getSharePointSites();
+  const index = sites.findIndex(s => s.id === id);
+  if (index !== -1) {
+    sites[index] = { ...sites[index], ...siteData, updatedAt: new Date().toISOString() };
+    localStorage.setItem(STORAGE_KEYS.SHAREPOINT, JSON.stringify(sites));
+    return sites[index];
+  }
+  return null;
+};
+
+export const deleteSharePointSite = (id) => {
+  const sites = getSharePointSites();
+  const filtered = sites.filter(s => s.id !== id);
+  localStorage.setItem(STORAGE_KEYS.SHAREPOINT, JSON.stringify(filtered));
+  return true;
+};
+
+// === NOTES (Pense-bête) ===
+export const getNotes = () => {
+  initializeStorage();
+  const data = localStorage.getItem(STORAGE_KEYS.NOTES);
+  return JSON.parse(data || '{"content":""}');
+};
+
+export const saveNotes = (content) => {
+  const notes = { content, updatedAt: new Date().toISOString() };
+  localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+  return notes;
 };
